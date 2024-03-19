@@ -1,2 +1,6 @@
 *.pyc
 *.csv
+Lab2/__pycache__/
+Lab3/__pycache__/
+Lab2/DataCSV/
+Lab3/DataCSV/
