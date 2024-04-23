@@ -152,7 +152,7 @@ class HarmonicPlotter(QWidget):
         t = np.linspace(0, 10, 500)
         y = harmonic_with_noise(t, self.amplitude, self.frequency, self.phase, self.noise_mean, self.noise_covariance, self.show_noise)
 
-        fs = 1 / (t[1] - t[0]) #Середня частота дискретизації
+        fs = 1 / (t[1] - t[0])
         b, a = iirfilter(4, 10 / (0.5 * fs), btype='lowpass', ftype='butter')
         y_filtered = lfilter(b, a, y)
 
