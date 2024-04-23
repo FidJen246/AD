@@ -4,20 +4,19 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QPushButton, QCheckBox, QLabel
 from PyQt5.QtCore import Qt
-from scipy.signal import iirfilter, lfilter
 
 
-def harmonic_with_noise(t, amplitude, frequency, phase, noise_mean, noise_covariance, show_noise):
-    signal = amplitude * np.sin(frequency * t + phase)
-    if show_noise:
-        noise = np.random.normal(noise_mean, np.sqrt(noise_covariance), size=t.shape)
-        signal += noise
-    return signal
+def simple_lowpass_filter(signal, alpha=0.1):
+        filtered_signal = np.zeros_like(signal)
+        filtered_signal[0] = signal[0]
+        for i in range(1, len(signal)):
+            filtered_signal[i] = alpha * signal[i] + (1 - alpha) * filtered_signal[i - 1]
+        return filtered_signal
 
 
 class HarmonicPlotter(QWidget):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
 
         self.amplitude = 1.0
         self.frequency = 1.0
@@ -104,7 +103,8 @@ class HarmonicPlotter(QWidget):
 
         self.setLayout(layout)
         self.setWindowTitle('Harmonic Plotter')
-        self.update_plot()
+        self.t = np.linspace(0, 10, 500)
+        self.update_plot(True)
         self.show()
 
     def update_amplitude(self, value):
@@ -121,18 +121,18 @@ class HarmonicPlotter(QWidget):
 
     def update_noise_mean(self, value):
         self.noise_mean = value / 100.0
-        self.update_plot()
+        self.update_plot(True)
 
     def update_noise_covariance(self, value):
         self.noise_covariance = value / 100.0
-        self.update_plot()
+        self.update_plot(True)
 
     def update_show_noise(self, state):
         self.show_noise = state == Qt.Checked
         self.update_plot()
 
     def reset_parameters(self):
-        self.amplitude = 1.0
+        self.amplitude = 1.0 
         self.frequency = 1.0
         self.phase = 0.0
         self.noise_mean = 0.0
@@ -146,22 +146,27 @@ class HarmonicPlotter(QWidget):
         self.slider_noise_covariance.setValue(int(self.noise_covariance * 100))
         self.checkbox_show_noise.setChecked(self.show_noise)
 
-        self.update_plot()
+        self.update_plot(True)
 
-    def update_plot(self):
-        t = np.linspace(0, 10, 500)
-        y = harmonic_with_noise(t, self.amplitude, self.frequency, self.phase, self.noise_mean, self.noise_covariance, self.show_noise)
+    def signal_with_noise(self, param):
+        signal = self.amplitude * np.sin(self.frequency * self.t + self.phase)
+        if param:
+            self.noise = np.random.normal(self.noise_mean, np.sqrt(self.noise_covariance), size=self.t.shape)
+        if self.show_noise:
+                signal += self.noise
+        return signal
 
-        fs = 1 / (t[1] - t[0])
-        b, a = iirfilter(4, 10 / (0.5 * fs), btype='lowpass', ftype='butter')
-        y_filtered = lfilter(b, a, y)
-
-        self.line_original.set_data(t, y)
-        self.line_filtered.set_data(t, y_filtered)
+    def update_plot(self, param=False):
+        signal = self.signal_with_noise(param)
+        self.line_original.set_data(self.t, signal)
         self.ax1.relim()
         self.ax1.autoscale_view()
+
+        filtered_sign = simple_lowpass_filter(signal, 0.1)
+        self.line_filtered.set_data(self.t, filtered_sign)
         self.ax2.relim()
         self.ax2.autoscale_view()
+
         self.figure.canvas.draw()
 
 
