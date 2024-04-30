@@ -21,6 +21,7 @@ class HarmonicPlotter:
         self.noise_mean = 0.0
         self.noise_covariance = 0.01
         self.show_noise = True
+        self.alpha = 0.01
 
         self.source = ColumnDataSource(data=dict(x=[], y=[], filtered_y=[]))
 
@@ -53,6 +54,9 @@ class HarmonicPlotter:
         self.slider_noise_covariance = Slider(title="Noise Covariance", start=1, end=100, value=self.noise_covariance*100, step=1)
         self.slider_noise_covariance.on_change('value', self.update_parameters_noise)
 
+        self.slider_alpha = Slider(title="Alpha", start=1, end=100, value=self.alpha*100, step=1)
+        self.slider_alpha.on_change('value', self.update_parameters)
+
         self.checkbox_show_noise = CheckboxButtonGroup(labels=["Show Noise"], active=[0])
         self.checkbox_show_noise.on_change('active', self.update_parameters)
 
@@ -61,6 +65,7 @@ class HarmonicPlotter:
         self.frequency = self.slider_frequency.value / 10.0
         self.phase = self.slider_phase.value / 100.0
         self.show_noise = 0 in self.checkbox_show_noise.active
+        self.alpha = self.slider_alpha.value / 100.0
         self.update(False)
 
     def update_parameters_noise(self, attr, old, new):
@@ -78,7 +83,7 @@ class HarmonicPlotter:
 
     def update(self, param):
         signal = self.signal_with_noise(param)
-        filtered_signal = simple_lowpass_filter(signal, 0.1)
+        filtered_signal = simple_lowpass_filter(signal, self.alpha)
         
         self.source.data = dict(x=self.t, y=signal, filtered_y=filtered_signal)
         curdoc().add_root(column(self.plot, 
@@ -86,7 +91,8 @@ class HarmonicPlotter:
                                   self.slider_frequency, 
                                   self.slider_phase, 
                                   self.slider_noise_mean, 
-                                  self.slider_noise_covariance, 
+                                  self.slider_noise_covariance,
+                                  self.slider_alpha,  
                                   self.checkbox_show_noise))
 
 plotter = HarmonicPlotter()

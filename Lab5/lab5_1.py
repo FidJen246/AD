@@ -24,6 +24,7 @@ class HarmonicPlotter(QWidget):
         self.noise_mean = 0.0
         self.noise_covariance = 0.01
         self.show_noise = True
+        self.alpha = 0.01
 
         self.init_ui()
 
@@ -92,6 +93,15 @@ class HarmonicPlotter(QWidget):
         layout.addWidget(self.label_noise_covariance)
         layout.addWidget(self.slider_noise_covariance)
 
+        self.slider_alpha = QSlider(Qt.Horizontal)
+        self.slider_alpha.setMinimum(1)
+        self.slider_alpha.setMaximum(100)
+        self.slider_alpha.setValue(int(self.alpha * 100))
+        self.slider_alpha.valueChanged.connect(self.update_alpha)
+        self.label_alpha = QLabel("Alpha")
+        layout.addWidget(self.label_alpha)
+        layout.addWidget(self.slider_alpha)
+
         self.checkbox_show_noise = QCheckBox('Show Noise')
         self.checkbox_show_noise.setChecked(self.show_noise)
         self.checkbox_show_noise.stateChanged.connect(self.update_show_noise)
@@ -106,6 +116,10 @@ class HarmonicPlotter(QWidget):
         self.t = np.linspace(0, 10, 500)
         self.update_plot(True)
         self.show()
+
+    def update_alpha(self, value):
+        self.alpha = value / 100.0
+        self.update_plot()
 
     def update_amplitude(self, value):
         self.amplitude = value / 10.0
@@ -138,6 +152,7 @@ class HarmonicPlotter(QWidget):
         self.noise_mean = 0.0
         self.noise_covariance = 0.01
         self.show_noise = True
+        self.alpha = 0.01
 
         self.slider_amplitude.setValue(int(self.amplitude * 10))
         self.slider_frequency.setValue(int(self.frequency * 10))
@@ -145,6 +160,7 @@ class HarmonicPlotter(QWidget):
         self.slider_noise_mean.setValue(int(self.noise_mean * 100))
         self.slider_noise_covariance.setValue(int(self.noise_covariance * 100))
         self.checkbox_show_noise.setChecked(self.show_noise)
+        self.slider_alpha.setValue(int(self.alpha * 100))
 
         self.update_plot(True)
 
@@ -162,7 +178,7 @@ class HarmonicPlotter(QWidget):
         self.ax1.relim()
         self.ax1.autoscale_view()
 
-        filtered_sign = simple_lowpass_filter(signal, 0.1)
+        filtered_sign = simple_lowpass_filter(signal, self.alpha)
         self.line_filtered.set_data(self.t, filtered_sign)
         self.ax2.relim()
         self.ax2.autoscale_view()
